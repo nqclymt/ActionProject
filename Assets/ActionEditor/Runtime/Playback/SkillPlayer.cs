@@ -22,12 +22,15 @@ namespace PKC.ActionEditor
         private float currentTime;
         private SkillPlaybackState state = SkillPlaybackState.Stopped;
 
-        public SkillPlayer(CombatSkillAsset skill = null)
+        public SkillPlayer(CombatSkillAsset skill = null, SkillExecutionContext context = null)
         {
+            Context = context ?? SkillExecutionContext.Empty;
             SetSkill(skill);
         }
 
         public CombatSkillAsset Skill { get; private set; }
+
+        public SkillExecutionContext Context { get; private set; }
 
         public SkillPlaybackState State => state;
 
@@ -49,6 +52,7 @@ namespace PKC.ActionEditor
         public event Action<SkillPlayer, string> Interrupted;
         public event Action<SkillPlayer, SkillPlaybackState, SkillPlaybackState> StateChanged;
         public event Action<SkillPlayer, float, float> TimeChanged;
+        public event Action<SkillPlayer, SkillExecutionContext, SkillExecutionContext> ContextChanged;
 
         /// <summary>
         /// 每个连续时间段触发一次。循环跨越结尾时会拆成“到结尾”和“从零开始”两段。
@@ -68,6 +72,24 @@ namespace PKC.ActionEditor
             currentTime = 0f;
             InterruptReason = null;
             SetState(SkillPlaybackState.Stopped);
+        }
+
+        public bool SetContext(SkillExecutionContext context)
+        {
+            context ??= SkillExecutionContext.Empty;
+            if (ReferenceEquals(Context, context))
+                return false;
+
+            var previousContext = Context;
+            Context = context;
+            ContextChanged?.Invoke(this, previousContext, Context);
+            return true;
+        }
+
+        public bool Play(SkillExecutionContext context)
+        {
+            SetContext(context);
+            return Play();
         }
 
         public bool Play()
