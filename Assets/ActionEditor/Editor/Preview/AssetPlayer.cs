@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace PKC.ActionEditor
@@ -195,46 +194,45 @@ namespace PKC.ActionEditor
                 }
             }
 
-            foreach (var group in Asset.groups.Where(group => group != null).Reverse())
+            var previews = new Dictionary<IDirectable, PreviewBase>();
+            var unsupportedDirectables = new HashSet<IDirectable>();
+            var executionEvents = DirectableExecutionOrder.Build(Asset);
+            foreach (var executionEvent in executionEvents)
             {
-                if (!group.IsActive) continue;
-                foreach (var track in group.Tracks.Where(track => track != null).Reverse())
+                var directable = executionEvent.Directable;
+                if (directable == null || !directable.IsActive || unsupportedDirectables.Contains(directable))
+                    continue;
+
+                if (!previews.TryGetValue(directable, out var preview))
                 {
-                    if (!track.IsActive) continue;
-                    var tType = track.GetType();
-                    if (typeDic.TryGetValue(tType, out var t1))
+                    if (!typeDic.TryGetValue(directable.GetType(), out var previewType))
                     {
-                        var preview = CreatePreview(t1, track);
-                        if (preview != null)
-                        {
-                            var p3 = new StartTimePointer(preview);
-                            timePointers.Add(p3);
-                
-                            unsortedStartTimePointers.Add(p3);
-                            timePointers.Add(new EndTimePointer(preview));
-                        }
+                        unsupportedDirectables.Add(directable);
+                        continue;
                     }
-                
-                    foreach (var clip in track.Clips.Where(clip => clip != null))
+
+                    preview = CreatePreview(previewType, directable);
+                    if (preview == null)
                     {
-                        var cType = clip.GetType();
-                        if (typeDic.TryGetValue(cType, out var t))
-                        {
-                            var preview = CreatePreview(t, clip);
-                            if (preview != null)
-                            {
-                                var p3 = new StartTimePointer(preview);
-                                timePointers.Add(p3);
-                
-                                unsortedStartTimePointers.Add(p3);
-                                timePointers.Add(new EndTimePointer(preview));
-                            }
-                        }
+                        unsupportedDirectables.Add(directable);
+                        continue;
                     }
+
+                    previews.Add(directable, preview);
+                }
+
+                if (executionEvent.EventType == DirectableExecutionEventType.Start)
+                {
+                    var startPointer = new StartTimePointer(preview);
+                    timePointers.Add(startPointer);
+                    unsortedStartTimePointers.Add(startPointer);
+                }
+                else
+                {
+                    timePointers.Add(new EndTimePointer(preview));
                 }
             }
 
-            timePointers = timePointers.OrderBy(pointer => pointer.time).ToList();
             preInitialized = true;
             initializedAsset = Asset;
         }

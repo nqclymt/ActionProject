@@ -8,7 +8,7 @@ This checklist records the work required to turn the current timeline framework 
 - [x] Define a versioned `CombatSkillAsset` schema with cast phases, duration, tags, cooldown, costs, targeting rules, and cancellation windows. / 定义带版本号的 `CombatSkillAsset` 数据结构，包含施法阶段、持续时间、标签、冷却、消耗、目标规则和取消窗口。
 - [x] Implement a runtime `SkillPlayer` with play, pause, stop, interrupt, seek, loop, and completion events. / 实现运行时 `SkillPlayer`，支持播放、暂停、停止、打断、跳转、循环和完成事件。
 - [x] Introduce a runtime execution context for caster, target, world position, direction, and shared combat services. / 建立运行时执行上下文，提供施法者、目标、世界坐标、方向和共享战斗服务。
-- [ ] Guarantee deterministic ordering for clips that start or end on the same frame. / 保证同一帧开始或结束的片段具有确定且稳定的执行顺序。
+- [x] Guarantee deterministic ordering for clips that start or end on the same frame. / 保证同一帧开始或结束的片段具有确定且稳定的执行顺序。
 - [ ] Add frame-based evaluation that produces the same result in editor preview and runtime playback. / 增加基于帧的求值机制，确保编辑器预览与运行时播放结果一致。
 
 ## P0 - Core Combat Tracks / 核心战斗轨道
