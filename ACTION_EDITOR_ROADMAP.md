@@ -4,7 +4,7 @@ This checklist records the work required to turn the current timeline framework 
 
 ## P0 - Runtime Foundation / 运行时基础
 
-- [ ] Split editor-only and runtime assemblies so skill data and playback code are available in player builds. / 拆分编辑器程序集与运行时程序集，使技能数据和播放代码能够进入正式 Player 构建。
+- [x] Split editor-only and runtime assemblies so skill data and playback code are available in player builds. / 拆分编辑器程序集与运行时程序集，使技能数据和播放代码能够进入正式 Player 构建。
 - [ ] Define a versioned `CombatSkillAsset` schema with cast phases, duration, tags, cooldown, costs, targeting rules, and cancellation windows. / 定义带版本号的 `CombatSkillAsset` 数据结构，包含施法阶段、持续时间、标签、冷却、消耗、目标规则和取消窗口。
 - [ ] Implement a runtime `SkillPlayer` with play, pause, stop, interrupt, seek, loop, and completion events. / 实现运行时 `SkillPlayer`，支持播放、暂停、停止、打断、跳转、循环和完成事件。
 - [ ] Introduce a runtime execution context for caster, target, world position, direction, and shared combat services. / 建立运行时执行上下文，提供施法者、目标、世界坐标、方向和共享战斗服务。
