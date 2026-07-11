@@ -133,12 +133,34 @@ namespace PKC.ActionEditor
                         for (int i = 0; i < list.Count; i++)
                         {
                             object listItem = list[i];
+
+                            if (IsSimpleListElementType(elementType))
+                            {
+                                EditorGUILayout.BeginHorizontal();
+                                var updatedItem = DrawSimpleListElement(elementType, $"Element {i}", listItem);
+                                if (GUILayout.Button("X", GUILayout.Width(20)))
+                                {
+                                    list.RemoveAt(i);
+                                    i--;
+                                    EditorGUILayout.EndHorizontal();
+                                    continue;
+                                }
+
+                                EditorGUILayout.EndHorizontal();
+                                if (!Equals(listItem, updatedItem))
+                                    list[i] = updatedItem;
+
+                                DrawDivider();
+                                continue;
+                            }
+
                             EditorGUILayout.BeginHorizontal();
                             EditorGUILayout.LabelField($"Element {i}");
                             if (GUILayout.Button("X", GUILayout.Width(20)))
                             {
-                                list.Remove(listItem);
+                                list.RemoveAt(i);
                                 i--;
+                                EditorGUILayout.EndHorizontal();
                                 continue;
                             }
 
@@ -146,7 +168,8 @@ namespace PKC.ActionEditor
                             EditorGUILayout.BeginHorizontal();
                             GUILayout.Space(12);
                             EditorGUILayout.BeginVertical();
-                            DrawDefaultInspector(listItem);
+                            if (listItem != null)
+                                DrawDefaultInspector(listItem);
                             EditorGUILayout.EndVertical();
                             EditorGUILayout.EndHorizontal();
                             DrawDivider();
@@ -164,7 +187,7 @@ namespace PKC.ActionEditor
                             field.SetValue(obj, list);
                         }
 
-                        list.Add(Activator.CreateInstance(elementType));
+                        list.Add(CreateListElement(elementType));
                     }
 
                     EditorGUILayout.EndHorizontal();
@@ -274,7 +297,7 @@ namespace PKC.ActionEditor
             }
             else if (showType.IsEnum)
             {
-                newValue = EditorGUILayout.EnumPopup(name, (Enum)value);
+                newValue = DrawLocalizedEnumPopup(name, (Enum)value);
             }
             else if (showType == typeof(AnimationCurve))
             {
@@ -366,6 +389,52 @@ namespace PKC.ActionEditor
 
             if (value != newValue)
                 field.SetValue(obj, newValue);
+        }
+
+        private static bool IsSimpleListElementType(Type type)
+        {
+            return type == typeof(string) || type == typeof(int) || type == typeof(float) ||
+                   type == typeof(bool) || type.IsEnum;
+        }
+
+        private static object DrawSimpleListElement(Type type, string label, object value)
+        {
+            if (type == typeof(string))
+                return EditorGUILayout.TextField(label, value as string ?? string.Empty);
+            if (type == typeof(int))
+                return EditorGUILayout.IntField(label, value is int intValue ? intValue : 0);
+            if (type == typeof(float))
+                return EditorGUILayout.FloatField(label, value is float floatValue ? floatValue : 0f);
+            if (type == typeof(bool))
+                return EditorGUILayout.Toggle(label, value is bool boolValue && boolValue);
+            if (type.IsEnum)
+                return DrawLocalizedEnumPopup(label, (Enum)(value ?? Activator.CreateInstance(type)));
+
+            return value;
+        }
+
+        private static Enum DrawLocalizedEnumPopup(string label, Enum value)
+        {
+            var enumType = value.GetType();
+            var names = Enum.GetNames(enumType);
+            var displayNames = names.Select(enumName =>
+            {
+                var enumField = enumType.GetField(enumName);
+                var menuName = enumField?.GetCustomAttribute<MenuNameAttribute>();
+                return menuName?.MenuName ?? enumName.SplitCamelCase();
+            }).ToArray();
+
+            var currentIndex = Math.Max(0, Array.IndexOf(names, value.ToString()));
+            var selectedIndex = EditorGUILayout.Popup(label, currentIndex, displayNames);
+            return (Enum)Enum.Parse(enumType, names[selectedIndex]);
+        }
+
+        private static object CreateListElement(Type type)
+        {
+            if (type == typeof(string))
+                return string.Empty;
+
+            return Activator.CreateInstance(type);
         }
 
         private int FieldsSprtBy(FieldInfo f1, FieldInfo f2)

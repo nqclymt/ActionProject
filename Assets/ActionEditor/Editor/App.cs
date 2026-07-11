@@ -46,6 +46,8 @@ namespace PKC.ActionEditor
                     {
                         AssetData = asset;
                         asset.Init();
+                        Selection.activeObject = CurrentInspectorPreviewAsset;
+                        EditorUtility.SetDirty(CurrentInspectorPreviewAsset);
                         OnOpenAsset?.Invoke(AssetData);
                         _lastSaveTime = DateTime.Now;
                         Refresh();

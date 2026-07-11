@@ -38,7 +38,7 @@ namespace PKC.ActionEditor
         public override void OnInspectorGUI()
         {
             var ow = target as InspectorPreviewAsset;
-            if (ow == null || App.SelectCount < 1)
+            if (ow == null || App.AssetData == null)
             {
                 EditorGUILayout.HelpBox(Lan.NotSelectAsset, MessageType.Info);
                 return;
@@ -50,7 +50,8 @@ namespace PKC.ActionEditor
 
             EditorGUI.BeginChangeCheck();
             DoAssetInspector();
-            DoSelectionInspector();
+            if (App.SelectCount > 0)
+                DoSelectionInspector();
             if (EditorGUI.EndChangeCheck())
             {
                 App.NotifyDataChanged();

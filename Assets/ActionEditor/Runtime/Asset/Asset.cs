@@ -70,6 +70,12 @@ namespace PKC.ActionEditor
             }
         }
 
+        protected virtual float MinimumLength => 0.1f;
+
+        protected virtual void OnValidateAsset()
+        {
+        }
+
 
         public void UpdateMaxTime()
         {
@@ -90,7 +96,7 @@ namespace PKC.ActionEditor
                 }
             }
 
-            Length = t;
+            Length = Mathf.Max(t, MinimumLength);
             RangeMin = rangeMin;
             RangeMax = rangeCoveredWholeAsset ? Length : rangeMax;
         }
@@ -103,6 +109,7 @@ namespace PKC.ActionEditor
 
         public void Validate()
         {
+            OnValidateAsset();
             groups ??= new List<Group>();
             groups.RemoveAll(group => group == null);
             directables = new List<IDirectable>();
