@@ -16,7 +16,8 @@ namespace PKC.ActionEditor.Cases
             var skill = new CombatSkillAsset
             {
                 skillId = "case.runtime.skill_player",
-                duration = 1f
+                duration = 1f,
+                frameRate = 20
             };
             skill.Validate();
 

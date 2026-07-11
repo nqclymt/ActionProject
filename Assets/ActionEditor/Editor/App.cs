@@ -283,6 +283,7 @@ namespace PKC.ActionEditor
         public static bool IsRange { get; set; }
 
         private static float _editorPreviousTime;
+        private static double _editorPlaybackTime;
 
         public static void Play(Action callback = null)
         {
@@ -301,6 +302,7 @@ namespace PKC.ActionEditor
             {
                 _player.Sample(playStart);
             }
+            _editorPlaybackTime = _player.CurrentTime;
             callback?.Invoke();
         }
 
@@ -316,28 +318,42 @@ namespace PKC.ActionEditor
             OnStop?.Invoke();
             IsPlay = false;
             IsPause = false;
+            _editorPlaybackTime = 0d;
         }
 
         public static void StepForward()
         {
+            if (AssetData == null)
+                return;
+
             if (Math.Abs(_player.CurrentTime - _player.Length) < 0.00001f)
             {
                 _player.Sample(0);
                 return;
             }
 
-            _player.Sample(_player.CurrentTime + Prefs.SnapInterval);
+            var nextFrame = Mathf.Min(_player.CurrentFrame + 1,
+                SkillFrameUtility.GetFrameCount(AssetData.Length, AssetData.EvaluationFrameRate));
+            _player.Sample(SkillFrameUtility.FrameToTime(nextFrame,
+                AssetData.EvaluationFrameRate, AssetData.Length));
+            _editorPlaybackTime = _player.CurrentTime;
         }
 
         public static void StepBackward()
         {
+            if (AssetData == null)
+                return;
+
             if (_player.CurrentTime == 0)
             {
                 _player.Sample(_player.Length);
                 return;
             }
 
-            _player.Sample(_player.CurrentTime - Prefs.SnapInterval);
+            var previousFrame = Mathf.Max(0, _player.CurrentFrame - 1);
+            _player.Sample(SkillFrameUtility.FrameToTime(previousFrame,
+                AssetData.EvaluationFrameRate, AssetData.Length));
+            _editorPlaybackTime = _player.CurrentTime;
         }
 
 
@@ -355,6 +371,7 @@ namespace PKC.ActionEditor
             if (!IsPlay || IsPause)
             {
                 _player.Sample();
+                _editorPlaybackTime = _player.CurrentTime;
                 return;
             }
 
@@ -369,23 +386,31 @@ namespace PKC.ActionEditor
             if (_player.CurrentTime < playStart || _player.CurrentTime >= playEnd)
             {
                 _player.Sample(playStart);
+                _editorPlaybackTime = _player.CurrentTime;
             }
 
-            var nextTime = _player.CurrentTime + delta;
+            var nextTime = (float)(_editorPlaybackTime + delta);
             if (nextTime >= playEnd)
             {
-                _player.Sample(playEnd);
-                _player.Sample(playStart);
+                var loopCount = Mathf.FloorToInt((nextTime - playStart) / playLength);
+                for (var i = 0; i < loopCount; i++)
+                {
+                    _player.Sample(playEnd);
+                    _player.Sample(playStart);
+                }
                 nextTime = playStart + (nextTime - playStart) % playLength;
             }
 
+            _editorPlaybackTime = nextTime;
             _player.Sample(nextTime);
             Repaint();
         }
 
         private static float GetPlayStart()
         {
-            return IsRange ? Mathf.Clamp(AssetData.RangeMin, 0, _player.Length) : 0;
+            var time = IsRange ? Mathf.Clamp(AssetData.RangeMin, 0, _player.Length) : 0;
+            return SkillFrameUtility.QuantizeTime(time, AssetData.EvaluationFrameRate,
+                _player.Length, SkillFrameRounding.Nearest);
         }
 
         private static float GetPlayEnd()
@@ -395,7 +420,9 @@ namespace PKC.ActionEditor
                 return _player.Length;
             }
 
-            return Mathf.Clamp(AssetData.RangeMax, GetPlayStart(), _player.Length);
+            var time = Mathf.Clamp(AssetData.RangeMax, GetPlayStart(), _player.Length);
+            return SkillFrameUtility.QuantizeTime(time, AssetData.EvaluationFrameRate,
+                _player.Length, SkillFrameRounding.Nearest);
         }
 
         public static void Shutdown()

@@ -1,0 +1,19 @@
+{
+    "name": "PKC.ActionEditor.Cases.FrameEvaluation.Editor",
+    "rootNamespace": "PKC.ActionEditor.Cases.Editor",
+    "references": [
+        "GUID:5d687fb92292a724fa516b60e19cb771",
+        "GUID:2d8c5cbad011c034f8f8ea9debfe0cd8"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

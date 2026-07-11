@@ -87,6 +87,9 @@ namespace PKC.ActionEditor
             if (asset?.groups == null)
                 return events;
 
+            var frameRate = asset.EvaluationFrameRate;
+            var duration = asset.Length;
+
             for (var groupIndex = 0; groupIndex < asset.groups.Count; groupIndex++)
             {
                 var group = asset.groups[groupIndex];
@@ -103,7 +106,7 @@ namespace PKC.ActionEditor
                     if (includeTracks)
                     {
                         AddPair(events, track, DirectableExecutionTargetType.Track,
-                            groupIndex, trackIndex, -1);
+                            groupIndex, trackIndex, -1, frameRate, duration);
                     }
 
                     var clips = track.Clips;
@@ -114,7 +117,7 @@ namespace PKC.ActionEditor
                             continue;
 
                         AddPair(events, clip, DirectableExecutionTargetType.Clip,
-                            groupIndex, trackIndex, clipIndex);
+                            groupIndex, trackIndex, clipIndex, frameRate, duration);
                     }
                 }
             }
@@ -132,14 +135,19 @@ namespace PKC.ActionEditor
         }
 
         private static void AddPair(List<DirectableExecutionEvent> events, IDirectable directable,
-            DirectableExecutionTargetType targetType, int groupIndex, int trackIndex, int itemIndex)
+            DirectableExecutionTargetType targetType, int groupIndex, int trackIndex, int itemIndex,
+            int frameRate, float duration)
         {
-            var isInstant = Math.Abs(directable.EndTime - directable.StartTime) <= InstantEpsilon;
+            var startTime = SkillFrameUtility.QuantizeTime(directable.StartTime, frameRate, duration,
+                SkillFrameRounding.Nearest);
+            var endTime = SkillFrameUtility.QuantizeTime(directable.EndTime, frameRate, duration,
+                SkillFrameRounding.Nearest);
+            var isInstant = Math.Abs(endTime - startTime) <= InstantEpsilon;
             events.Add(new DirectableExecutionEvent(directable, targetType,
-                DirectableExecutionEventType.Start, directable.StartTime,
+                DirectableExecutionEventType.Start, startTime,
                 groupIndex, trackIndex, itemIndex, isInstant));
             events.Add(new DirectableExecutionEvent(directable, targetType,
-                DirectableExecutionEventType.End, directable.EndTime,
+                DirectableExecutionEventType.End, endTime,
                 groupIndex, trackIndex, targetType == DirectableExecutionTargetType.Track ? int.MaxValue : itemIndex,
                 isInstant));
         }

@@ -20,6 +20,7 @@ namespace PKC.ActionEditor
         private const float TimeEpsilon = 0.00001f;
 
         private float currentTime;
+        private double playbackTime;
         private SkillPlaybackState state = SkillPlaybackState.Stopped;
 
         public SkillPlayer(CombatSkillAsset skill = null, SkillExecutionContext context = null)
@@ -35,6 +36,12 @@ namespace PKC.ActionEditor
         public SkillPlaybackState State => state;
 
         public float CurrentTime => currentTime;
+
+        public int CurrentFrame => Skill == null
+            ? 0
+            : SkillFrameUtility.GetEvaluationFrame(currentTime, FrameRate, Duration);
+
+        public int FrameRate => Skill?.EvaluationFrameRate ?? 30;
 
         public float Duration => Skill == null ? 0f : Mathf.Max(0.1f, Skill.duration);
 
@@ -52,6 +59,7 @@ namespace PKC.ActionEditor
         public event Action<SkillPlayer, string> Interrupted;
         public event Action<SkillPlayer, SkillPlaybackState, SkillPlaybackState> StateChanged;
         public event Action<SkillPlayer, float, float> TimeChanged;
+        public event Action<SkillPlayer, int, int> FrameEvaluated;
         public event Action<SkillPlayer, SkillExecutionContext, SkillExecutionContext> ContextChanged;
 
         /// <summary>
@@ -70,6 +78,7 @@ namespace PKC.ActionEditor
             Skill = skill;
             Skill?.Validate();
             currentTime = 0f;
+            playbackTime = 0d;
             InterruptReason = null;
             SetState(SkillPlaybackState.Stopped);
         }
@@ -126,6 +135,8 @@ namespace PKC.ActionEditor
 
             if (currentTime > TimeEpsilon)
                 SetTime(0f, true);
+            else
+                playbackTime = 0d;
 
             InterruptReason = null;
             SetState(SkillPlaybackState.Stopped);
@@ -179,14 +190,15 @@ namespace PKC.ActionEditor
 
         private void TickOnce(float deltaTime)
         {
-            var targetTime = currentTime + deltaTime;
-            if (targetTime < Duration - TimeEpsilon)
+            playbackTime += deltaTime;
+            if (playbackTime < Duration - TimeEpsilon)
             {
-                SetTime(targetTime, true);
+                SetTime((float)playbackTime, true, false);
                 return;
             }
 
-            SetTime(Duration, true);
+            playbackTime = Duration;
+            SetTime(Duration, true, false);
             SetState(SkillPlaybackState.Completed);
             Completed?.Invoke(this);
         }
@@ -196,31 +208,50 @@ namespace PKC.ActionEditor
             var remaining = deltaTime;
             while (remaining > TimeEpsilon)
             {
-                var timeToEnd = Duration - currentTime;
+                var timeToEnd = Duration - (float)playbackTime;
                 if (remaining < timeToEnd - TimeEpsilon)
                 {
-                    SetTime(currentTime + remaining, true);
+                    playbackTime += remaining;
+                    SetTime((float)playbackTime, true, false);
                     return;
                 }
 
-                SetTime(Duration, true);
+                playbackTime = Duration;
+                SetTime(Duration, true, false);
                 remaining = Mathf.Max(0f, remaining - timeToEnd);
-                SetTime(0f, false);
+                playbackTime = 0d;
+                SetTime(0f, false, false);
                 Looped?.Invoke(this);
             }
         }
 
-        private void SetTime(float value, bool evaluate)
+        private void SetTime(float value, bool evaluate, bool synchronizePlaybackTime = true)
         {
             var previousTime = currentTime;
-            currentTime = Mathf.Clamp(value, 0f, Duration);
+            var targetTime = SkillFrameUtility.QuantizeTime(value, FrameRate, Duration);
+            if (synchronizePlaybackTime)
+                playbackTime = targetTime;
 
-            if (Mathf.Abs(previousTime - currentTime) <= TimeEpsilon)
+            if (Mathf.Abs(previousTime - targetTime) <= TimeEpsilon)
                 return;
 
-            TimeChanged?.Invoke(this, previousTime, currentTime);
             if (evaluate)
-                TimeEvaluated?.Invoke(this, previousTime, currentTime);
+            {
+                SkillFrameUtility.EvaluateRange(previousTime, targetTime, FrameRate, Duration, sample =>
+                {
+                    currentTime = sample.Time;
+                    TimeChanged?.Invoke(this, sample.PreviousTime, sample.Time);
+                    FrameEvaluated?.Invoke(this, sample.PreviousFrame, sample.Frame);
+                    TimeEvaluated?.Invoke(this, sample.PreviousTime, sample.Time);
+                });
+            }
+            else
+            {
+                currentTime = targetTime;
+                TimeChanged?.Invoke(this, previousTime, currentTime);
+            }
+
+            currentTime = targetTime;
         }
 
         private void SetState(SkillPlaybackState value)

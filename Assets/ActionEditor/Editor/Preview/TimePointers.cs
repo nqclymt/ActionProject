@@ -14,20 +14,24 @@ namespace PKC.ActionEditor
     {
         private bool triggered;
         private float lastTargetStartTime;
+        private readonly float evaluationStartTime;
+        private readonly float evaluationEndTime;
         public PreviewBase target { get; private set; }
-        float IDirectableTimePointer.time => target.directable.StartTime;
+        float IDirectableTimePointer.time => evaluationStartTime;
 
-        public StartTimePointer(PreviewBase target)
+        public StartTimePointer(PreviewBase target, float evaluationStartTime, float evaluationEndTime)
         {
             this.target = target;
             triggered = false;
             lastTargetStartTime = target.directable.StartTime;
+            this.evaluationStartTime = evaluationStartTime;
+            this.evaluationEndTime = evaluationEndTime;
         }
 
         void IDirectableTimePointer.TriggerForward(float currentTime, float previousTime)
         {
             if (!target.directable.IsActive) return;
-            if (currentTime >= target.directable.StartTime)
+            if (currentTime >= evaluationStartTime)
             {
                 if (!triggered)
                 {
@@ -41,7 +45,7 @@ namespace PKC.ActionEditor
         void IDirectableTimePointer.Update(float currentTime, float previousTime)
         {
             if (!target.directable.IsActive) return;
-            if (currentTime >= target.directable.StartTime && currentTime < target.directable.EndTime &&
+            if (currentTime >= evaluationStartTime && currentTime < evaluationEndTime &&
                 currentTime > 0)
             {
                 var deltaMoveClip = target.directable.StartTime - lastTargetStartTime;
@@ -56,7 +60,7 @@ namespace PKC.ActionEditor
         void IDirectableTimePointer.TriggerBackward(float currentTime, float previousTime)
         {
             if (!target.directable.IsActive) return;
-            if (currentTime < target.directable.StartTime || currentTime <= 0)
+            if (currentTime < evaluationStartTime || currentTime <= 0)
             {
                 if (triggered)
                 {
@@ -71,19 +75,21 @@ namespace PKC.ActionEditor
     public struct EndTimePointer : IDirectableTimePointer
     {
         private bool triggered;
+        private readonly float evaluationEndTime;
         public PreviewBase target { get; private set; }
-        float IDirectableTimePointer.time => target.directable.EndTime;
+        float IDirectableTimePointer.time => evaluationEndTime;
 
-        public EndTimePointer(PreviewBase target)
+        public EndTimePointer(PreviewBase target, float evaluationEndTime)
         {
             this.target = target;
             triggered = false;
+            this.evaluationEndTime = evaluationEndTime;
         }
 
         void IDirectableTimePointer.TriggerForward(float currentTime, float previousTime)
         {
             if (!target.directable.IsActive) return;
-            if (currentTime >= target.directable.EndTime)
+            if (currentTime >= evaluationEndTime)
             {
                 if (!triggered)
                 {
@@ -104,7 +110,7 @@ namespace PKC.ActionEditor
         void IDirectableTimePointer.TriggerBackward(float currentTime, float previousTime)
         {
             if (!target.directable.IsActive) return;
-            if (currentTime < target.directable.EndTime || currentTime <= 0)
+            if (currentTime < evaluationEndTime || currentTime <= 0)
             {
                 if (triggered)
                 {

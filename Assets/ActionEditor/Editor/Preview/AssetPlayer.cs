@@ -49,8 +49,17 @@ namespace PKC.ActionEditor
         public float CurrentTime
         {
             get => currentTime;
-            set => currentTime = Mathf.Clamp(value, 0, Length);
+            set
+            {
+                currentTime = Asset == null
+                    ? 0f
+                    : SkillFrameUtility.QuantizeTime(value, Asset.EvaluationFrameRate, Length);
+            }
         }
+
+        public int CurrentFrame => Asset == null
+            ? 0
+            : SkillFrameUtility.GetEvaluationFrame(currentTime, Asset.EvaluationFrameRate, Length);
         
         public float Length
         {
@@ -83,24 +92,30 @@ namespace PKC.ActionEditor
                 Reset();
             }
 
-            CurrentTime = time;
-            if ((currentTime == 0 || currentTime == Length) && previousTime == currentTime)
+            var targetTime = SkillFrameUtility.QuantizeTime(time, Asset.EvaluationFrameRate, Length);
+            if ((targetTime == 0 || targetTime == Length) && previousTime == targetTime)
             {
+                currentTime = targetTime;
                 return;
             }
             
-            if (!preInitialized && currentTime > 0 && previousTime == 0)
+            if (!preInitialized && targetTime > 0 && previousTime == 0)
             {
                 InitializePreviewPointers();
             }
 
-
             if (timePointers != null)
             {
-                InternalSamplePointers(currentTime, previousTime);
+                SkillFrameUtility.EvaluateRange(previousTime, targetTime,
+                    Asset.EvaluationFrameRate, Length, sample =>
+                    {
+                        currentTime = sample.Time;
+                        InternalSamplePointers(sample.Time, sample.PreviousTime);
+                    });
             }
 
-            previousTime = currentTime;
+            currentTime = targetTime;
+            previousTime = targetTime;
         }
 
         void InternalSamplePointers(float currentTime, float previousTime)
@@ -223,13 +238,15 @@ namespace PKC.ActionEditor
 
                 if (executionEvent.EventType == DirectableExecutionEventType.Start)
                 {
-                    var startPointer = new StartTimePointer(preview);
+                    var evaluationEndTime = SkillFrameUtility.QuantizeTime(directable.EndTime,
+                        Asset.EvaluationFrameRate, Asset.Length, SkillFrameRounding.Nearest);
+                    var startPointer = new StartTimePointer(preview, executionEvent.Time, evaluationEndTime);
                     timePointers.Add(startPointer);
                     unsortedStartTimePointers.Add(startPointer);
                 }
                 else
                 {
-                    timePointers.Add(new EndTimePointer(preview));
+                    timePointers.Add(new EndTimePointer(preview, executionEvent.Time));
                 }
             }
 
@@ -274,7 +291,16 @@ namespace PKC.ActionEditor
         {
             if (timePointers != null && previousTime > 0)
             {
-                InternalSamplePointers(0, previousTime);
+                var asset = initializedAsset ?? Asset;
+                if (asset != null)
+                {
+                    SkillFrameUtility.EvaluateRange(previousTime, 0f,
+                        asset.EvaluationFrameRate, asset.Length, sample =>
+                        {
+                            currentTime = sample.Time;
+                            InternalSamplePointers(sample.Time, sample.PreviousTime);
+                        });
+                }
             }
 
             timePointers = null;

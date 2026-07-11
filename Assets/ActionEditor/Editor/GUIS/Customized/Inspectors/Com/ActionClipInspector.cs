@@ -56,6 +56,7 @@ namespace PKC.ActionEditor
 
             var canScale = action.CanScale();
             var doFrames = Prefs.timeStepMode == Prefs.TimeStepMode.Frames;
+            var frameRate = action.Root is Asset asset ? asset.EvaluationFrameRate : Prefs.FrameRate;
 
             GUILayout.BeginVertical("box");
             GUILayout.BeginHorizontal();
@@ -69,9 +70,9 @@ namespace PKC.ActionEditor
                 GUILayout.Label("IN", GUILayout.Width(30));
                 if (doFrames)
                 {
-                    _in *= Prefs.FrameRate;
+                    _in *= frameRate;
                     _in = EditorGUILayout.DelayedIntField((int)_in, GUILayout.Width(80));
-                    _in *= (1f / Prefs.FrameRate);
+                    _in *= (1f / frameRate);
                 }
                 else
                 {
@@ -82,9 +83,9 @@ namespace PKC.ActionEditor
                 GUILayout.Label("◄");
                 if (doFrames)
                 {
-                    _length *= Prefs.FrameRate;
+                    _length *= frameRate;
                     _length = EditorGUILayout.DelayedIntField((int)_length, GUILayout.Width(80));
-                    _length *= (1f / Prefs.FrameRate);
+                    _length *= (1f / frameRate);
                 }
                 else
                 {
@@ -97,9 +98,9 @@ namespace PKC.ActionEditor
                 GUILayout.Label("OUT", GUILayout.Width(30));
                 if (doFrames)
                 {
-                    _out *= Prefs.FrameRate;
+                    _out *= frameRate;
                     _out = EditorGUILayout.DelayedIntField((int)_out, GUILayout.Width(80));
-                    _out *= (1f / Prefs.FrameRate);
+                    _out *= (1f / frameRate);
                 }
                 else
                 {
@@ -139,8 +140,8 @@ namespace PKC.ActionEditor
                     _out = _in + _length;
                 }
 
-                _in = Mathf.Round(_in / Prefs.SnapInterval) * Prefs.SnapInterval;
-                _out = Mathf.Round(_out / Prefs.SnapInterval) * Prefs.SnapInterval;
+                _in = action.Root.SnapTime(_in);
+                _out = action.Root.SnapTime(_out);
 
                 _in = Mathf.Clamp(_in, previousTime, _out);
                 _out = Mathf.Clamp(_out, _in, nextClip != null ? nextTime : float.PositiveInfinity);

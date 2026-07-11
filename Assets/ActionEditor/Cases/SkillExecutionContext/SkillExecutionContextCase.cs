@@ -47,7 +47,7 @@ namespace PKC.ActionEditor.Cases
                 Require(Vector3.Distance(explicitContext.Direction, Vector3.forward) < 0.0001f,
                     "显式方向没有归一化。");
 
-                var skill = new CombatSkillAsset { duration = 1f };
+                var skill = new CombatSkillAsset { duration = 1f, frameRate = 20 };
                 skill.Validate();
                 var player = new SkillPlayer(skill);
                 var contextChangedCount = 0;

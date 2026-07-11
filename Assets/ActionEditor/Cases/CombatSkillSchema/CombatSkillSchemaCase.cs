@@ -42,6 +42,7 @@ namespace PKC.ActionEditor.Cases
                 "The resource cost did not survive serialization.");
             Require(restored.targetingMode == CombatSkillTargetingMode.Cone && restored.maxTargets == 3,
                 "The targeting rules did not survive serialization.");
+            Require(restored.frameRate == 60, "The evaluation frame rate did not survive serialization.");
             Require(restored.cancellationWindows.Count == 1,
                 "The cancellation windows did not survive serialization.");
 
@@ -54,6 +55,7 @@ namespace PKC.ActionEditor.Cases
             {
                 skillId = "case.combat.fire_slash",
                 duration = 1.5f,
+                frameRate = 60,
                 tags = new List<string> { "Melee", "Fire" },
                 cooldown = 2.5f,
                 costs = new List<CombatSkillCost>

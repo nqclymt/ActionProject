@@ -50,6 +50,8 @@ namespace PKC.ActionEditor
 
         public float ViewTime => ViewTimeMax - ViewTimeMin;
 
+        public virtual int EvaluationFrameRate => 30;
+
         public float RangeMin
         {
             get => rangeMin;

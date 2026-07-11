@@ -26,6 +26,9 @@ namespace PKC.ActionEditor
         [MenuName("持续时间（秒）")]
         public float duration = 1f;
 
+        [MenuName("求值帧率")]
+        public int frameRate = 30;
+
         [MenuName("技能标签")]
         public List<string> tags = new();
 
@@ -68,6 +71,9 @@ namespace PKC.ActionEditor
         [fsIgnore]
         public int SchemaVersion => schemaVersion;
 
+        [fsIgnore]
+        public override int EvaluationFrameRate => frameRate;
+
         protected override float MinimumLength => Math.Max(duration, 0.1f);
 
         protected override void OnValidateAsset()
@@ -77,6 +83,7 @@ namespace PKC.ActionEditor
 
             skillId ??= string.Empty;
             duration = Math.Max(0.1f, duration);
+            frameRate = Math.Max(1, Math.Min(frameRate, 240));
             cooldown = Math.Max(0f, cooldown);
             targetRange = Math.Max(0f, targetRange);
             targetRadius = Math.Max(0f, targetRadius);

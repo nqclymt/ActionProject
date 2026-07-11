@@ -6,7 +6,13 @@ namespace PKC.ActionEditor
     {
         public static float SnapTime(this IDirector asset, float time)
         {
-            return Mathf.Round(time / Prefs.SnapInterval) * Prefs.SnapInterval;
+            if (asset is Asset actionAsset)
+            {
+                return SkillFrameUtility.QuantizeTime(time, actionAsset.EvaluationFrameRate,
+                    actionAsset.Length, SkillFrameRounding.Nearest);
+            }
+
+            return Mathf.Max(0f, time);
         }
 
         public static float TimeToPos(this IDirector asset, float time, float width)
