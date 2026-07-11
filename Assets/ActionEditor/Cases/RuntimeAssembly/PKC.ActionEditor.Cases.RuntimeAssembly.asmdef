@@ -1,7 +1,9 @@
 {
-    "name": "PKC.ActionEditor",
-    "rootNamespace": "",
-    "references": [],
+    "name": "PKC.ActionEditor.Cases.RuntimeAssembly",
+    "rootNamespace": "PKC.ActionEditor.Cases",
+    "references": [
+        "GUID:5d687fb92292a724fa516b60e19cb771"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

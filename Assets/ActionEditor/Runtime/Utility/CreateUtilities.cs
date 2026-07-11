@@ -1,11 +1,12 @@
-﻿using UnityEditor;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using UnityEngine;
 
 namespace PKC.ActionEditor
 {
     internal static class CreateUtilities
     {
-        
         public static void SaveAssetIntoObject(Object childAsset, Object masterAsset)
         {
             if (childAsset == null || masterAsset == null)
