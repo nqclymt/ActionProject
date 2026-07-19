@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace PKC.ActionEditor
@@ -22,6 +23,8 @@ namespace PKC.ActionEditor
         private float currentTime;
         private double playbackTime;
         private SkillPlaybackState state = SkillPlaybackState.Stopped;
+        private SkillAnimationEvaluator animationEvaluator;
+        private Animator animationAnimator;
 
         public SkillPlayer(CombatSkillAsset skill = null, SkillExecutionContext context = null)
         {
@@ -75,6 +78,8 @@ namespace PKC.ActionEditor
             if (Skill != null)
                 Stop();
 
+            ResetAnimationEvaluator();
+
             Skill = skill;
             Skill?.Validate();
             currentTime = 0f;
@@ -90,6 +95,7 @@ namespace PKC.ActionEditor
                 return false;
 
             var previousContext = Context;
+            ResetAnimationEvaluator();
             Context = context;
             ContextChanged?.Invoke(this, previousContext, Context);
             return true;
@@ -140,6 +146,7 @@ namespace PKC.ActionEditor
 
             InterruptReason = null;
             SetState(SkillPlaybackState.Stopped);
+            ResetAnimationEvaluator();
             Stopped?.Invoke(this);
             return true;
         }
@@ -151,6 +158,7 @@ namespace PKC.ActionEditor
 
             InterruptReason = reason ?? string.Empty;
             SetState(SkillPlaybackState.Interrupted);
+            ResetAnimationEvaluator();
             Interrupted?.Invoke(this, InterruptReason);
             return true;
         }
@@ -200,6 +208,7 @@ namespace PKC.ActionEditor
             playbackTime = Duration;
             SetTime(Duration, true, false);
             SetState(SkillPlaybackState.Completed);
+            ResetAnimationEvaluator();
             Completed?.Invoke(this);
         }
 
@@ -242,6 +251,7 @@ namespace PKC.ActionEditor
                     currentTime = sample.Time;
                     TimeChanged?.Invoke(this, sample.PreviousTime, sample.Time);
                     FrameEvaluated?.Invoke(this, sample.PreviousFrame, sample.Frame);
+                    EvaluateAnimation(sample.PreviousTime, sample.Time);
                     TimeEvaluated?.Invoke(this, sample.PreviousTime, sample.Time);
                 });
             }
@@ -262,6 +272,52 @@ namespace PKC.ActionEditor
             var previousState = state;
             state = value;
             StateChanged?.Invoke(this, previousState, state);
+        }
+
+        private void EvaluateAnimation(float previousTime, float time)
+        {
+            var animator = Context?.Caster == null
+                ? null
+                : Context.Caster.GetComponentInChildren<Animator>();
+            if (animator == null || Skill == null)
+            {
+                ResetAnimationEvaluator();
+                return;
+            }
+
+            if (animationEvaluator == null || animationAnimator != animator)
+            {
+                ResetAnimationEvaluator();
+                animationAnimator = animator;
+                animationEvaluator = new SkillAnimationEvaluator(animator, GetAnimationTracks(Skill));
+            }
+
+            animationEvaluator.Evaluate(previousTime, time);
+        }
+
+        private static IEnumerable<AnimationTrack> GetAnimationTracks(CombatSkillAsset skill)
+        {
+            if (skill?.groups == null)
+                yield break;
+
+            foreach (var group in skill.groups)
+            {
+                if (group == null || !group.IsActive)
+                    continue;
+
+                foreach (var track in group.Tracks)
+                {
+                    if (track is AnimationTrack animationTrack && animationTrack.IsActive)
+                        yield return animationTrack;
+                }
+            }
+        }
+
+        private void ResetAnimationEvaluator()
+        {
+            animationEvaluator?.Dispose();
+            animationEvaluator = null;
+            animationAnimator = null;
         }
     }
 }

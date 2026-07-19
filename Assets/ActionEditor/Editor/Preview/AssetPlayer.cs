@@ -165,6 +165,8 @@ namespace PKC.ActionEditor
                     }
                 }
             }
+
+            AnimationPreviewCoordinator.Evaluate(initializedAsset ?? Asset, previousTime, currentTime);
         }
 
         /// <summary>
@@ -305,6 +307,7 @@ namespace PKC.ActionEditor
 
             timePointers = null;
             unsortedStartTimePointers = null;
+            AnimationPreviewCoordinator.Reset();
             preInitialized = false;
             initializedAsset = null;
         }

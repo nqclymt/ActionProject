@@ -13,7 +13,7 @@ This checklist records the work required to turn the current timeline framework 
 
 ## P0 - Core Combat Tracks / 核心战斗轨道
 
-- [ ] Add an animation track with state, speed, transition, layer, avatar mask, and root-motion controls. / 增加动画轨道，支持状态、速度、过渡、层级、Avatar Mask 和 Root Motion 控制。
+- [x] Add an animation track with state, speed, transition, layer, avatar mask, and root-motion controls. / 增加动画轨道，支持状态、速度、过渡、层级、Avatar Mask 和 Root Motion 控制。
 - [ ] Add an audio track with volume, pitch, spatial settings, mixer routing, looping, and stop behavior. / 增加音频轨道，支持音量、音调、空间化、混音器路由、循环和停止行为。
 - [ ] Add a VFX track with prefab binding, attachment point, transform offsets, lifetime, pooling, and scrub-safe preview. / 增加特效轨道，支持预制体绑定、挂点、变换偏移、生命周期、对象池和可安全拖动时间轴的预览。
 - [ ] Add a movement track for displacement, rotation, dash curves, and root-motion overrides. / 增加位移轨道，支持位置移动、旋转、冲刺曲线和 Root Motion 覆盖。

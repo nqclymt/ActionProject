@@ -34,6 +34,7 @@ namespace PKC.ActionEditor
         IEnumerable<IDirectable> IDirectable.Children => Tracks;
         
         private GameObject _actor;
+        [fsIgnore]
         public GameObject Actor { 
             get { return _actor; }
             set

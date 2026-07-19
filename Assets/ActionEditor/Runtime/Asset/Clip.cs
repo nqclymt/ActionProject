@@ -110,12 +110,12 @@ namespace PKC.ActionEditor
             return true;
         }
 
-        public void OnBeforeSerialize()
+        public virtual void OnBeforeSerialize()
         {
     
         }
 
-        public void OnAfterDeserialize()
+        public virtual void OnAfterDeserialize()
         {
            
         }
